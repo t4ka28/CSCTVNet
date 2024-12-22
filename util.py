@@ -6,6 +6,7 @@ import IPython
 import openpyxl
 import japanize_matplotlib
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from torchvision.utils import save_image
@@ -137,6 +138,26 @@ def convT_CSC(X, fil): #転置畳み込みの関数
 '''
 保存系
 '''
+
+def save_highlight(image, save_path):
+
+    # 画像を2D配列に変換（c=1のため）
+    image_2d = image[0, 0]
+
+    # 範囲外の部分を赤に塗りつぶす
+    highlighted_image_rgb = np.stack([np.zeros_like(image_2d), np.zeros_like(image_2d), np.zeros_like(image_2d)], axis=-1)  # 初期は全て黒
+
+    # 範囲外の画素を赤に設定
+    highlighted_image_rgb[(image_2d < 0) | (image_2d > 1)] = [1, 0, 0]  # 赤色を設定
+
+    # 範囲内の部分は元の画像の明度に基づいて表示
+    highlighted_image_rgb[(image_2d >= 0) & (image_2d <= 1)] = np.stack([image_2d, image_2d, image_2d], axis=-1)[(image_2d >= 0) & (image_2d <= 1)]
+
+    # 画像を表示
+    plt.axis("off")
+    plt.imshow(highlighted_image_rgb)
+    plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
+
 def plot_img(u, path_name):
     save_image(u, f"{path_name}.png")
     

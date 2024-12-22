@@ -72,6 +72,7 @@ to_pil = transforms.ToPILImage()
 os.makedirs(f"result/{model_name}/{setting}/org", exist_ok=True)
 os.makedirs(f"result/{model_name}/{setting}/deg", exist_ok=True)
 os.makedirs(f"result/{model_name}/{setting}/output", exist_ok=True)
+os.makedirs(f"result/{model_name}/{setting}/highlight", exist_ok=True)
 
 ###################################################################################
 # Select Param and Model
@@ -115,7 +116,8 @@ for batch in tqdm(loaders['test']):
     with torch.set_grad_enabled(False):
         x_hat = model(z)
 
-    org_img, deg_img, output = to_pil(batch[0]), to_pil(util.ProxBoxConstraint(z[0])), to_pil(x_hat[0])
+    util.save_highlight(x_hat.cpu().detach().numpy(), f"result/{model_name}/{setting}/highlight/highlight{num_iters}.png")
+    org_img, deg_img, output = to_pil(batch[0]), to_pil(util.ProxBoxConstraint(z[0])), to_pil(util.ProxBoxConstraint(x_hat[0]))
     org_img.save(f"result/{model_name}/{setting}/org/org{num_iters}.png")
     deg_img.save(f"result/{model_name}/{setting}/deg/deg{num_iters}.png")
     output.save(f"result/{model_name}/{setting}/output/{num_iters}.png")

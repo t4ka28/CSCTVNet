@@ -52,7 +52,8 @@ class CSCTV(nn.Module):
 
         for k in range(self.params.K):
             x = x_bef - self.gam1[k]*(x_bef - util.conv_CSC(a_bef, self.B) + util.Dt(y1_bef) + util.convT(y2_bef, self.params.fil))
-            x_aft = util.ProxBoxConstraint(x)
+            x_aft = x
+            # x_aft = util.ProxBoxConstraint(x)
 
             a = a_bef + self.gam2[k]*util.convT_CSC(x_bef - util.conv_CSC(a_bef, self.B), self.B)
             a_aft = util.ProxL1(a, self.gam2[k]*self.lam1[k])
