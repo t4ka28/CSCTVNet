@@ -12,6 +12,37 @@ import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 from skimage.metrics import structural_similarity as ssim
 
+class Phi:
+    def __init__(self, deg_type, img, blur_size=3, missing_percentage=50):
+        self.__make_kernel__(deg_type, img, blur_size, missing_percentage)
+
+    def __make_kernel__(self, deg_type, img, blur_size, missing_percentage):
+        _, _, H, W = img.shape
+        if deg_type == "denoising":
+            self.operation = "conv"
+            self.kernel = torch.tensor([[1,0],[0,0]])
+        elif deg_type == "deblurring":
+            self.operation = "conv"
+            self.kernel = torch.ones(blur_size, blur_size)/(blur_size*blur_size)
+        elif deg_type == "inpainting":
+            self.operation = "hadamard"
+            missing_rate = missing_percentage/100
+            missing_r = (torch.randperm(H*W) > H*W*missing_rate).int()
+            self.kernel = missing_r.reshape(H, W)
+
+    def __call__(self, input, T=False):
+
+        if not T:
+            if self.operation == "conv":
+                return conv(input, self.kernel)  # 行列積
+            elif self.operation == "hadamard":
+                return self.kernel*input  # アダマール積（要素ごとの積）
+        else:
+            if self.operation == "conv":
+                return convT(input, self.kernel)  # 行列積
+            elif self.operation == "hadamard":
+                return self.kernel*input  # アダマール積（要素ごとの積）
+
 '''
 Prox計算
 '''
@@ -128,7 +159,6 @@ def convT_CSC(X, fil): #転置畳み込みの関数
     fft_fil = torch.zeros(P, channels, N, M, device='cuda:0')
     fft_fil[:, :, 0:k1, 0:k2] = torch.flip(fil, [2,3])
     fft_fil = torch.roll(fft_fil, shifts=(N-center_k1, M-center_k2), dims=(2, 3))
-    
     fft_fil = torch.fft.fft2(fft_fil)
     fft_X = torch.fft.ifft2(X)
     B = torch.fft.fft2(fft_fil*fft_X.unsqueeze(1))
@@ -219,6 +249,13 @@ def plot_dist_to_epsilon(fidelity, epsilon, result_path):
     plt.legend()
     plt.savefig(path, bbox_inches='tight')
     plt.close()
+    
+def plot_param(model, folder_path):
+    plot_array(model.gam1.cpu().detach(), title="gam1", x_label="Layer", y_label="Value", result_path=folder_path, file_name=f"gam1")
+    plot_array(model.gam2.cpu().detach(), title="gam2", x_label="Layer", y_label="Value", result_path=folder_path, file_name=f"gam2")
+    plot_array(model.gam3.cpu().detach(), title="gam3", x_label="Layer", y_label="Value", result_path=folder_path, file_name=f"gam3")
+    plot_array(model.lam1.cpu().detach(), title="lam1", x_label="Layer", y_label="Value", result_path=folder_path, file_name=f"lam1")
+    plot_array(model.lam2.cpu().detach(), title="lam2", x_label="Layer", y_label="Value", result_path=folder_path, file_name=f"lam2")
 
 def init_workbook(parameters):
     workbook = openpyxl.Workbook()
@@ -247,16 +284,6 @@ def my_ssim(batch_images1, batch_images2):
         ssim_value = ssim(img1, img2, data_range = 1.0, channel_axis=2)  # multichannel=Trueは、カラー画像の場合に使用する
         ssim_values.append(ssim_value)
     return sum(ssim_values)/len(ssim_values)
-
-def make_degmat(deg_type, blur_size=3):
-
-    if deg_type == "denoising":
-        kernel = torch.tensor([[1,0],[0,0]])
-    # elif deg_type == "debluring":
-    else:
-        kernel = torch.ones(blur_size, blur_size)/(blur_size*blur_size)
-        
-    return kernel.cuda()
 
 def calc_max_singular(fil): #畳み込みの関数
     '''
