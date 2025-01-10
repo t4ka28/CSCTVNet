@@ -127,7 +127,7 @@ for batch in tqdm(loaders['test']):
     # forward
     # track history if only in train
     with torch.set_grad_enabled(False):
-        x_hat = model(z, phi)
+        x_hat = model(z, phi, alpha=noise_std)
 
     org_img, deg_img, output = to_pil(batch[0]), to_pil(util.ProxBoxConstraint(z[0])), to_pil(util.ProxBoxConstraint(x_hat[0]))
     org_img.save(f"result/{model_name}/{deg}/{setting}/org/org{num_iters}.png")

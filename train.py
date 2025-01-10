@@ -43,10 +43,10 @@ parser.add_argument("--weight", type=float, dest="weight", help="Weight of DVTV"
 parser.add_argument("--deg", type=str, dest="deg", help="The kind of the degradation.", default="debluring")
 parser.add_argument("--blur_level", type=int, dest="blur_level", help="Should be an int in the range [0,255]", default=3)
 parser.add_argument("--missing_rate", type=int, dest="missing_rate", help="Should be an int in the range [0,100]", default=50)
-parser.add_argument("--noise_level", type=float, dest="noise_level", help="Should be an int in the range [0,255]", default=0)
-parser.add_argument("--lr", type=float, dest="lr", help="ADAM Learning rate", default=1e-4)
+parser.add_argument("--noise_level", type=int, dest="noise_level", help="Should be an int in the range [0,255]", default=0)
+parser.add_argument("--lr", type=float, dest="lr", help="ADAM Learning rate", default=5e-4)
 parser.add_argument("--lr_step", type=int, dest="lr_step", help="Learning rate decrease step", default=50)
-parser.add_argument("--lr_decay", type=float, dest="lr_decay", help="ADAM Learning rate decay (on step)", default=0.7)
+parser.add_argument("--lr_decay", type=float, dest="lr_decay", help="ADAM Learning rate decay (on step)", default=1.0)
 parser.add_argument("--num_epochs", type=int, dest="num_epochs", help="Total number of epochs to train", default=250)
 parser.add_argument("--batch_size", type=int, dest="batch_size", help="Total number of epochs to train", default=5)
 parser.add_argument("--patch_size", type=int, dest="patch_size", help="Total number of epochs to train", default=64)
@@ -67,7 +67,7 @@ DVTV_weight = args.weight
 deg = args.deg
 blur_level = args.blur_level
 missing_rate = args.missing_rate
-noise_std = args.noise_level
+noise_std = args.noise_level / 255.0
 lr = args.lr
 lr_step = args.lr_step
 lr_decay = args.lr_decay
